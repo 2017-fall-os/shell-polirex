@@ -1,0 +1,9 @@
+all: ksh
+
+CFLAGS = -g -I -02
+
+ksh: ksh.o mytok.o
+	cc -o ksh ksh.o mytok.o
+mytok.o: mytok.c mytok.h
+clean:
+	rm -f *.o ksh ksh.exe

@@ -1,0 +1,99 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <unistd.h>
+
+#include "mytok.h"
+
+static char *del;
+
+int countWords(char *string) { //method counts for number of words by counting delimiters (spaces) to allocate for array
+  char lastChar;
+  char l;
+  int numWords = 0;
+
+  while(*string != '\0') {
+    lastChar = *string;
+    if(lastChar == ' ') {
+      numWords++;
+    }
+      string++;
+  }
+  return numWords;
+}
+
+int countLetters(char *word) { //method counts for number of letters by reaching the delimiter and returning total letters
+  int letters;
+  char currChar;
+  while(*word != '\0' || *word == ' ') {
+    currChar = *word;
+    if(currChar != ' ') {
+      letters++;
+      }
+    // else if(currChar == ' ') {
+      
+    // break;
+    //}
+       word++;
+  }
+  return letters;
+}
+
+char ** mytok(char *string, char delim) { //method tokenizes and places each word in one array to which array,
+  int letters, numWords;                                          //a double pointer, points to
+  char currChar;
+  char **array;
+  char *word, *curr, *copy, *tmp;
+
+  numWords = countWords(string);  
+  
+
+  if(string == NULL) { //if input is null send error message and exit
+    printf("memory not allocated");
+    exit(0);
+  }
+  else  { //otherwise allocate memory for double pointer using numWords method
+    array = (char **) malloc(numWords + 1);
+  
+    tmp = string; //set a temporary placeholder for string to copy into main double pointer
+    for(int i = 0; i <= numWords; i++) { //loop through double pointer
+      //letters = countLetters(curr) + 1;
+      //word = (char *) malloc(letters);
+      //      while(*tmp != '\0') {
+      if(*tmp == ' ') tmp++; //check for spaces or end of line characters
+	if(*tmp == '\0') break;
+	size_t len;
+	for(word = tmp; *word != ' ' && *word != '\0'; word++); //if not found begin copy ofinput pointer into another pointer
+	len = word - tmp + 1;
+	curr = copy = (char *) malloc(len); 
+	for(word = tmp; *word != ' ' && *word != '\0'; word++) {
+	  *(copy++) = *word;
+	  
+	}//once copied into array called current, set double pointer to point to current array
+	*copy = 0;
+	array[i] = curr;
+	//update temporary placeholder for next character
+	tmp = word;
+	
+	
+    }
+ 
+  }
+  return array;
+}
+
+//main method allocates memory for input pointer
+/*int input() {
+  int i;
+  char **array;
+  char *str = (char *) malloc(100);
+
+
+  //read input and save it in pointer called string
+ read(0, str, 100);
+ countWords(str);
+ //call countWords method with string parameter, set output of mytok to double pointer called array and write
+ i = countWords(str);
+ array = mytok(str, ' ', i);
+ return array;
+}*/

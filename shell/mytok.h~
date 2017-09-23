@@ -1,0 +1,3 @@
+int countWords(char *string);
+char ** mytok(char *str, char delim, int numWords);
+int countLetters(char *word);
