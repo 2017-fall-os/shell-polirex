@@ -7,14 +7,14 @@
 
 static char *del;
 
-int countWords(char *string) { //method counts for number of words by counting delimiters (spaces) to allocate for array
+int countWords(char *string, char delim) { //method counts for number of words by counting delimiters (spaces) to allocate for array
   char lastChar;
   char l;
   int numWords = 0;
 
   while(*string != '\0') {
     lastChar = *string;
-    if(lastChar == ' ') {
+    if(lastChar == delim) {
       numWords++;
     }
       string++;
@@ -45,7 +45,7 @@ char ** mytok(char *string, char delim) { //method tokenizes and places each wor
   char **array;
   char *word, *curr, *copy, *tmp;
 
-  numWords = countWords(string);  
+  numWords = countWords(string, delim);  
   
 
   if(string == NULL) { //if input is null send error message and exit

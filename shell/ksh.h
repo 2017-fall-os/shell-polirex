@@ -1,8 +1,8 @@
 int main(int arg, char **argv, char **argu);
 int found(char *arg);
 int cmp(char *str, char *str2);
-int countLetters(char *str);
-char* myconcat(char *str1, char *str2);
+int letters(char *str);
+char *myconcat(char *str1, char *str2);
 #ifndef DELIM
 #define SPACE ' '
 #define COLON ':'
