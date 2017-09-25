@@ -66,7 +66,7 @@ int main(int argc, char **argv, char **envp) {
 
 	//found uses stat system call to check if command exists, if it returns true it sets the command to the first argument passed by the user
 	if(found(array[0])) {
-	  printf("%s\n ??????");
+	  
 	  
 	  cmd = array[0];
 
@@ -91,11 +91,11 @@ int main(int argc, char **argv, char **envp) {
 	     char *cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
 	     //printf("\nyour command was %s\n", cmd1);
 	     if(found(cmd1)) {
-	       printf("asdfasdfadsf");
+	       
 	    
 	       count = 1;
 	       cmd = cmd1;
-	       printf("command found");
+	      
 	  
 	       break;
 	       }
