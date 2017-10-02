@@ -12,115 +12,122 @@ int main(int argc, char **argv, char **envp) {
   int waitVal, waitStatus;
   char *cmd;
   int count = 0;
+  char cwd[200];
+  char **array;
+  char *str = (char *) malloc(1000);
+
+  //find path environment
+   char *path = getenv("PATH");
+   path = myconcat("trash:", path);
+   //once found $PATH, delimit string with colon to traverse through all directories
+   char **dir = mytok(path, COLON);
 
   //infinite loop to keep asking for commands
   while(1) {
+
+    
     write(1, "$ ", 2);
+    //if array has commands still in it, free the array 
+      if(array != NULL) {
+	for(int i = 0; array[i] != '\0'; i++) {
+	  free(array[i]);
+	  array[i] = NULL;
+	}
+	free(array);
+	array = NULL;
+      }
+
+    
     //ask user for input and store in string variable
-    char *str = (char *) malloc(1000);
-    read(0, str, 1000);
+
+    int l = read(0, str, 1000);
+    //read method adds extra '\n' character, so erase and replace with '\0'
+    str[l - 1] = '\0';
+
     //check if command was exit, if it was, exit
     int checkExit = cmp(str, "exit");
     if(checkExit == 1) {
       //check if user want to exit
       exit(0);
     }
+   
 
     else {
       //space constant as delimiter defined in ksh.h file
       //tokenize string and place it in array, first argument will be command, next two will be parameters
-      char **array = mytok(str, SPACE);
+      array = mytok(str, SPACE);
 
-      
-      /*
-      //  printf("hello world (pid:%d)\n", (int) getpid());
-    int rc = fork();
-    if (rc < 0) {
-        // fork failed; exit
-        fprintf(stderr, "fork failed\n");
-        exit(1);
-    } else if (rc == 0) {
-        // child (new process)
-      // printf("hello, I am child (pid:%d)\n", (int) getpid());
-
-        execve(array[0], &array[0], envp);  // runs word count
-        printf("this shouldn't print out");
-    } else {
-        // parent goes down this path (original process)
-        int wc = wait(NULL);
-        printf("hello, I am parent of %d (wc:%d) (pid:%d)\n",
-	       rc, wc, (int) getpid());
-	       }*/
-
-
-
+      //if user wants to change directory, use chdir system call and show current working directory
+      if(cmp(array[0], "cd")) {
+        getcwd(cwd, sizeof(cwd));
+	printf("current working directory%s\n",cwd);
+	int success;
+	success = chdir(array[1]);
+	if(success < 0) printf("\ndirectory not found\n");
+	continue;	
+     }
+      //if a pipe was found in the string, call piping method
+      /* if(cmp(array[1], "|")) {
+	piping(str, envp, dir);
+	}*/
       
 
-
-      
-
-      //if it is not empty, begin a count to track if the command existed
+      //if it array not empty, begin a count to track if the command existed
       if(array != '\0'){
 
 
 
 	//found uses stat system call to check if command exists, if it returns true it sets the command to the first argument passed by the user
-	if(found(array[0])) {
-	  
-	  
+	if(found(array[0]) == 1) {
 	  cmd = array[0];
-
 	  //sets command counter to 1 to execute
 	    count = 1;
 	}
 	//if it was not immediately found
 	else {
-	  
-	  //find $PATH variable
-	    char *path = getenv("PATH");
-
-	  
-	  //once found $PATH, delimit string with colon to traverse through all directories
-	   char **dir = mytok(path, COLON);
-
 	  //traverse through all files to find a potential command in all directories
 	  int i;
-	  
 	   for(i = 0; dir[i] != (char *)0; i++) {
-	    //once found a file, put together in the syntax is, ex: /usr/local/sbin/cmd
+	    //once found a file, for every file, put together in the syntax is, ex: /usr/local/sbin/cmd
 	     char *cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
-	     //printf("\nyour command was %s\n", cmd1);
-	     if(found(cmd1)) {
-	       
-	    
+	     int x = found(cmd1);
+	     //call found method and if it is found, set command counter to 1 and set the tmp cmd to the actual command ready to execute
+	     if(x == 1) {
+	       printf("found");
 	       count = 1;
 	       cmd = cmd1;
-	      
-	  
 	       break;
 	       }
-	    }
-	
-      
+
+	   }
     
       if(count == 1) {
-      //if command was found, create child process
+      //if command was found, create process
 	  pid = fork();
 	  if(pid == 0){
-	//if child process, exec
+	//if child process, execute
 	     execve(cmd, array, envp);
+	     count = 0;
 	    }
-	  else {
+	  else if(pid != 0){
 	//if parent process, wait until child exits
-	      waitVal = waitpid(pid, &waitStatus, 0);
-	      if(waitVal == pid) {
-	       printf("%s\n child exited with value: %d", waitStatus);
+	     waitVal = waitpid(pid, &waitStatus, 0);
+	     if(waitVal == pid) {
+	     printf("%s\n child exited with value: %d", waitStatus);
+	       count = 0;
 	     }
-		  }
-		}
+	  }
+	  //if it is not a child process and if there is an & found in the arguments, run on background
+	  else if(pid != 0 && (findChar(str, '&') == 1)) {
+	    /*printf("%d\n",findChar(str, '&'));
+	    printf("is running on background");
+	    runBackground(cmd, array, envp);*/
+	    continue;
+	  }
+	}
 	else {
 	  //if command was not found, print error message
-	  printf("%s command was not found\n", array[0]);
+	  printf("%scommand was not found\n%s\n", array[0]);
 	}
 	}
       }
@@ -131,12 +138,12 @@ int main(int argc, char **argv, char **envp) {
 //stat system call was made to check if command exists and if is executable, if it is, method returns true
 int found(char *arg) {
   struct stat sb;
-  if((stat(arg, &sb) == 0) && (sb.st_mode & S_IXUSR))
+  if((stat(arg, &sb) == 0) && (sb.st_mode & S_IXOTH))
     return 1;
   else return 0;
 }
 
-//string comparison method to check if exit was entered, if both strings match, it returns true
+//string comparison method to check if any direct exit or cd was entered, if both strings match, it returns true
 int cmp(char *str, char *str2) {
   int count = 0;
   while(str[count] != '\0' && str2[count] != '\0') {
@@ -178,3 +185,126 @@ char *myconcat(char *str1, char *str2) {
 
   return concat;
   }
+
+//method to find a certain specific character in the original string
+int findChar(char *str, char toFind) {
+   int count = 0;
+  while(str[count] != '\0') {
+    if(str[count] == toFind) {
+      return 1;
+    }
+    count++;
+  }
+    return 0;
+}
+
+void runBackground(char *cmd, char ** array, char **envp) {
+  execve(cmd, array, envp);
+}
+
+//piping method taken from The Linux Programming Interface book added with the loops above to find commands in each directory
+
+/*int piping(char *str, char **envp, char ** dir) {
+  int pfd[2];
+  int count, pid;
+  char * cmd;
+  char *cmd2;
+
+  if(pipe(pfd) == -1)
+    printf("pipe");
+
+  char ** tmp = mytok(str, PIPE);
+
+  switch(fork()) {
+  case -1:
+    printf("fork");
+  
+  case 0:
+    if(close(pfd[0]) == -1)
+       printf("close 1");
+    if(pfd[1] != STDOUT_FILENO) {
+      if(dup2(pfd[1], STDOUT_FILENO) == -1)
+        printf("dup2 1");
+      if(close(pfd[1]) == -1)
+        printf("close 2");
+    }
+    
+      for(int i = 0; dir[i] != (char *)0; i++) {
+	//once found a file, put together in the syntax is, ex: /usr/local/sbin/cmd
+	char *cmd1 = myconcat(myconcat(dir[i], "/"), tmp[0]);
+        int x = found(cmd1);
+        if(x == 1) {
+	  printf("found");
+	  count = 1;
+	  cmd = cmd1;
+	  break;
+	}
+      }
+       if(count == 1) {
+      //if command was found, create child process
+	  pid = fork();
+	  if(pid == 0){
+	//if child process, execute
+	    execve(cmd, tmp, envp);
+	     count = 0;
+	  }
+       }
+
+       default:
+	 break;
+  }
+
+	 switch(fork()) {
+	 case -1:
+	   printf("fork");
+	 case 0:
+	   if(close(pfd[1]) == -1)
+	     printf("close 3");
+	   if(pfd[0] != STDIN_FILENO) {
+	     if(dup2(pfd[0], STDIN_FILENO) == -1) {
+	       printf("dup2 2");
+	     }
+	     if(close(pfd[0]) == -1)
+	       printf("close 4");
+	   }
+	 
+	      for(int i = 0; dir[i] != (char *)0; i++) {
+	//once found a file, put together in the syntax is, ex: /usr/local/sbin/cmd
+		char *cmd2 = myconcat(myconcat(dir[i], "/"), tmp[1]);
+		int x2 = found(cmd2);
+		if(x2 == 1) {
+		  printf("found2");
+		  count = 1;
+		  cmd = cmd2;
+		  break;
+		}
+	      }
+	      if(count == 1) {
+		//if command was found, create child process
+		pid = fork();
+		if(pid == 0){
+		  //if child process, execute
+		  execve(cmd2, tmp, envp);
+		  count = 0;
+		}
+	      }
+       default:
+	 break;
+	 }
+
+
+
+
+if(close(pfd[0]) == -1)
+  printf("close 5");
+if(close(pfd[1]) == -1)
+   printf("close 6");
+if(wait(NULL) == -1)
+  printf("wait 1");
+if(wait(NULL) == -1)
+  printf("wait 2");
+
+  }*/
+       
+
+       

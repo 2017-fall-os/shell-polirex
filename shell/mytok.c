@@ -10,11 +10,11 @@ static char *del;
 int countWords(char *string, char delim) { //method counts for number of words by counting delimiters (spaces) to allocate for array
   char lastChar;
   char l;
-  int numWords = 0;
+  int numWords = 1;
 
   while(*string != '\0') {
     lastChar = *string;
-    if(lastChar == delim) {
+    if(lastChar == delim || lastChar == '\0') {
       numWords++;
     }
       string++;
@@ -61,12 +61,13 @@ char ** mytok(char *string, char delim) { //method tokenizes and places each wor
       //word = (char *) malloc(letters);
       //      while(*tmp != '\0') {
       if(*tmp == delim) tmp++; //check for spaces or end of line characters
-	if(*tmp == '\0') break;
+      if(*tmp == '\0') break;
 	size_t len;
-	for(word = tmp; *word != delim && *word != '\0'; word++); //if not found begin copy ofinput pointer into another pointer
+	for(word = tmp; (*word != delim && *word != '\0'); word++); //if not found begin copy ofinput pointer into another pointer to count letters in input
 	len = word - tmp + 1;
-	curr = copy = (char *) malloc(len); 
-	for(word = tmp; *word != delim && *word != '\0'; word++) {
+	curr = copy = (char *) malloc(len);
+	//once letters have been counted and allocated, begin copying to array
+	for(word = tmp; (*word != delim && *word != '\0'); word++) {
 	  *(copy++) = *word;
 	  
 	}//once copied into array called current, set double pointer to point to current array
