@@ -15,6 +15,7 @@ int main(int argc, char **argv, char **envp) {
   char cwd[200];
   char **array;
   char *str = (char *) malloc(1000);
+  int arrlen;
 
   //find path environment
    char *path = getenv("PATH");
@@ -56,6 +57,11 @@ int main(int argc, char **argv, char **envp) {
       //space constant as delimiter defined in ksh.h file
       //tokenize string and place it in array, first argument will be command, next two will be parameters
       array = mytok(str, SPACE);
+
+      for(int i = 0; array[i] != (char *)0; i++) {
+	if(findChar(array[i], '&'))
+	  array[i] = '\0';
+      }
 
       //if user wants to change directory, use chdir system call and show current working directory
       if(cmp(array[0], "cd")) {
