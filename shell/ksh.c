@@ -86,13 +86,12 @@ int main(int argc, char **argv, char **envp) {
 	//if it was not immediately found
 	else {
 	  //traverse through all files to find a potential command in all directories
-	  int i;
-	   for(i = 0; dir[i] != (char *)0; i++) {
+	   for(int i = 0; dir[i] != (char *)0; i++) {
 	    //once found a file, for every file, put together in the syntax is, ex: /usr/local/sbin/cmd
 	     char *cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
-	     int x = found(cmd1);
+	 
 	     //call found method and if it is found, set command counter to 1 and set the tmp cmd to the actual command ready to execute
-	     if(x == 1) {
+	     if(found(cmd1) == 1) {
 	       printf("found");
 	       count = 1;
 	       cmd = cmd1;
@@ -104,12 +103,12 @@ int main(int argc, char **argv, char **envp) {
       if(count == 1) {
       //if command was found, create process
 	  pid = fork();
-	  if(pid == 0){
+	  if(pid == 0 && (findChar(str, '&') == 0)){
 	//if child process, execute
 	     execve(cmd, array, envp);
 	     count = 0;
 	    }
-	  else if(pid != 0){
+	  else if(pid != 0 && (findChar(str, '&') == 0)){
 	//if parent process, wait until child exits
 	     waitVal = waitpid(pid, &waitStatus, 0);
 	     if(waitVal == pid) {
@@ -119,6 +118,7 @@ int main(int argc, char **argv, char **envp) {
 	  }
 	  //if it is not a child process and if there is an & found in the arguments, run on background
 	  else if(pid != 0 && (findChar(str, '&') == 1)) {
+	    printf("running on bg");
 	    /*printf("%d\n",findChar(str, '&'));
 	    printf("is running on background");
 	    runBackground(cmd, array, envp);*/
