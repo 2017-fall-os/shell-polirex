@@ -30,15 +30,15 @@ int main(int argc, char **argv, char **envp) {
     write(1, "$ ", 2);
     //if array has commands still in it, free the array 
       if(array != NULL) {
-	for(int i = 0; array[i] != '\0'; i++) {
-	  free(array[i]);
-	  array[i] = NULL;
-	}
-	free(array);
-	array = NULL;
+			for(int i = 0; array[i] != '\0'; i++) {
+		free(array[i]);  
+		array[i] = NULL;
+		}
+		free(array);
+		array = NULL;
       }
 
-    
+    printf("here");
     //ask user for input and store in string variable
 
     int l = read(0, str, 1000);
@@ -46,8 +46,10 @@ int main(int argc, char **argv, char **envp) {
     str[l - 1] = '\0';
 
     //check if command was exit, if it was, exit
-    int checkExit = cmp(str, "exit");
-    if(checkExit == 1) {
+//    int checkExit = cmp(str, "exit");
+//    if(checkExit == 1) {
+printf("'%s'\n",str);
+	if(cmp(str,"exit")){
       //check if user want to exit
       exit(0);
     }
@@ -56,22 +58,23 @@ int main(int argc, char **argv, char **envp) {
     else {
       //space constant as delimiter defined in ksh.h file
       //tokenize string and place it in array, first argument will be command, next two will be parameters
-      array = mytok(str, SPACE);
+      array = mytok(str, SPACE);printf("got here");
 
       for(int i = 0; array[i] != (char *)0; i++) {
-	if(findChar(array[i], '&'))
-	  array[i] = '\0';
+		if(findChar(array[i], '&'))
+		array[i] = '\0';
       }
 
       //if user wants to change directory, use chdir system call and show current working directory
       if(cmp(array[0], "cd")) {
         getcwd(cwd, sizeof(cwd));
-	printf("current working directory%s\n",cwd);
-	int success;
-	success = chdir(array[1]);
-	if(success < 0) printf("\ndirectory not found\n");
-	continue;	
-     }
+		printf("current working directory%s\n",cwd);
+		int success;
+		success = chdir(array[1]);
+		if(success < 0) 
+			printf("\ndirectory not found\n");
+		continue;	
+	}	
       //if a pipe was found in the string, call piping method
       /* if(cmp(array[1], "|")) {
 	piping(str, envp, dir);
@@ -81,62 +84,66 @@ int main(int argc, char **argv, char **envp) {
       //if it array not empty, begin a count to track if the command existed
       if(array != '\0'){
 
-
+printf("zxcvzxczv");
 
 	//found uses stat system call to check if command exists, if it returns true it sets the command to the first argument passed by the user
 	if(found(array[0]) == 1) {
-	  cmd = array[0];
+		printf("found");
+	    cmd = array[0];
+	    execve(cmd, array, envp);
 	  //sets command counter to 1 to execute
 	    count = 1;
+	    
 	}
 	//if it was not immediately found
 	else {
-	  //traverse through all files to find a potential command in all directories
-	   for(int i = 0; dir[i] != (char *)0; i++) {
-	    //once found a file, for every file, put together in the syntax is, ex: /usr/local/sbin/cmd
-	     char *cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
-	 
-	     //call found method and if it is found, set command counter to 1 and set the tmp cmd to the actual command ready to execute
-	     if(found(cmd1) == 1) {
-	       printf("found");
-	       count = 1;
-	       cmd = cmd1;
-	       break;
-	       }
+		//traverse through all files to find a potential command in all directories
+		for(int i = 0; dir[i] != (char *)0; i++) {
+			//once found a file, for every file, put together in the syntax is, ex: /usr/local/sbin/cmd
+			char *cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
 
-	   }
+			//call found method and if it is found, set command counter to 1 and set the tmp cmd to the actual command ready to execute
+			if(found(cmd1) == 1) {
+				printf("found");
+				count = 1;
+				cmd = cmd1;
+				break;
+			}
+		}
     
-      if(count == 1) {
-      //if command was found, create process
-	  pid = fork();
-	  if(pid == 0 && (findChar(str, '&') == 0)){
-	//if child process, execute
-	     execve(cmd, array, envp);
-	     count = 0;
-	    }
-	  else if(pid != 0 && (findChar(str, '&') == 0)){
-	//if parent process, wait until child exits
-	     waitVal = waitpid(pid, &waitStatus, 0);
-	     if(waitVal == pid) {
-	     printf("%s\n child exited with value: %d", waitStatus);
-	       count = 0;
-	     }
-	  }
-	  //if it is not a child process and if there is an & found in the arguments, run on background
-	  else if(pid != 0 && (findChar(str, '&') == 1)) {
-	    printf("running on bg");
-	    /*printf("%d\n",findChar(str, '&'));
-	    printf("is running on background");
-	    runBackground(cmd, array, envp);*/
-	    continue;
-	  }
+		if(count == 1) {
+		//if command was found, create process
+			printf("forking");
+			pid = fork();
+			if(pid == 0 && (findChar(str, '&') == 0)){
+				//if child process, execute
+				printf("and here %s",cmd);
+				execve(cmd, array, envp);
+				count = 0;
+			}
+			else if(pid != 0 && (findChar(str, '&') == 0)){
+				//if parent process, wait until child exits
+				waitVal = waitpid(pid, &waitStatus, 0);
+				if(waitVal == pid) {
+					printf("%s\n child exited with value: %d", waitStatus);
+					count = 0;
+				}
+			}
+			//if it is not a child process and if there is an & found in the arguments, run on background
+			else if(pid != 0 && (findChar(str, '&') == 1)) {
+				printf("running on bg");
+				/*printf("%d\n",findChar(str, '&'));
+				printf("is running on background");
+				runBackground(cmd, array, envp);*/
+				continue;
+			}
+		}
+		else {
+			//if command was not found, print error message
+		printf("%scommand was not found\n%s\n", array[0]);
+		}
 	}
-	else {
-	  //if command was not found, print error message
-	  printf("%scommand was not found\n%s\n", array[0]);
-	}
-	}
-      }
+    }
     }
   }
 }
