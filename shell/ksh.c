@@ -26,12 +26,12 @@ int main(int argc, char **argv, char **envp) {
   //infinite loop to keep asking for commands
   while(1) {
 
-    
+
     write(1, "$ ", 2);
-    //if array has commands still in it, free the array 
+    //if array has commands still in it, free the array
       if(array != NULL) {
 			for(int i = 0; array[i] != '\0'; i++) {
-		free(array[i]);  
+		free(array[i]);
 		array[i] = NULL;
 		}
 		free(array);
@@ -53,17 +53,19 @@ printf("'%s'\n",str);
       //check if user want to exit
       exit(0);
     }
-   
+
 
     else {
       //space constant as delimiter defined in ksh.h file
       //tokenize string and place it in array, first argument will be command, next two will be parameters
-      array = mytok(str, SPACE);printf("got here");
+      array = mytok(str, SPACE);
+      printf("got here");
 
       for(int i = 0; array[i] != (char *)0; i++) {
 		if(findChar(array[i], '&'))
-		array[i] = '\0';
-      }
+      array[i] = NULL;
+      //array[i] = '\0';
+    }
 
       //if user wants to change directory, use chdir system call and show current working directory
       if(cmp(array[0], "cd")) {
@@ -71,29 +73,28 @@ printf("'%s'\n",str);
 		printf("current working directory%s\n",cwd);
 		int success;
 		success = chdir(array[1]);
-		if(success < 0) 
+		if(success < 0)
 			printf("\ndirectory not found\n");
-		continue;	
-	}	
+		continue;
+	}
       //if a pipe was found in the string, call piping method
       /* if(cmp(array[1], "|")) {
 	piping(str, envp, dir);
 	}*/
-      
+
 
       //if it array not empty, begin a count to track if the command existed
       if(array != '\0'){
-
-printf("zxcvzxczv");
+        printf("zxcvzxczv");
 
 	//found uses stat system call to check if command exists, if it returns true it sets the command to the first argument passed by the user
-	if(found(array[0]) == 1) {
+  if(found(array[0]) == 1) {
 		printf("found");
-	    cmd = array[0];
-	    execve(cmd, array, envp);
+	  cmd = array[0];
+	  execve(cmd, array, envp);
 	  //sets command counter to 1 to execute
-	    count = 1;
-	    
+	  count = 1;
+
 	}
 	//if it was not immediately found
 	else {
@@ -110,7 +111,7 @@ printf("zxcvzxczv");
 				break;
 			}
 		}
-    
+
 		if(count == 1) {
 		//if command was found, create process
 			printf("forking");
@@ -193,7 +194,7 @@ char *myconcat(char *str1, char *str2) {
   for(tmp = str2; *tmp; res++ , tmp++) {
     *res = *tmp;
   }
- 
+
   *res = '\0';
 
   return concat;
@@ -231,7 +232,7 @@ void runBackground(char *cmd, char ** array, char **envp) {
   switch(fork()) {
   case -1:
     printf("fork");
-  
+
   case 0:
     if(close(pfd[0]) == -1)
        printf("close 1");
@@ -241,7 +242,7 @@ void runBackground(char *cmd, char ** array, char **envp) {
       if(close(pfd[1]) == -1)
         printf("close 2");
     }
-    
+
       for(int i = 0; dir[i] != (char *)0; i++) {
 	//once found a file, put together in the syntax is, ex: /usr/local/sbin/cmd
 	char *cmd1 = myconcat(myconcat(dir[i], "/"), tmp[0]);
@@ -280,7 +281,7 @@ void runBackground(char *cmd, char ** array, char **envp) {
 	     if(close(pfd[0]) == -1)
 	       printf("close 4");
 	   }
-	 
+
 	      for(int i = 0; dir[i] != (char *)0; i++) {
 	//once found a file, put together in the syntax is, ex: /usr/local/sbin/cmd
 		char *cmd2 = myconcat(myconcat(dir[i], "/"), tmp[1]);
@@ -318,6 +319,3 @@ if(wait(NULL) == -1)
   printf("wait 2");
 
   }*/
-       
-
-       
