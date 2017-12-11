@@ -10,7 +10,7 @@
 int main(int argc, char **argv, char **envp) {
   int pid;
   int waitVal, waitStatus;
-  char *cmd;
+  char *cmd = (char *) malloc(100);
   int count = 0;
   char cwd[200];
   char **array;
@@ -25,20 +25,18 @@ int main(int argc, char **argv, char **envp) {
 
   //infinite loop to keep asking for commands
   while(1) {
-
-
     write(1, "$ ", 2);
     //if array has commands still in it, free the array
-      if(array != NULL) {
-			for(int i = 0; array[i] != '\0'; i++) {
-		free(array[i]);
-		array[i] = NULL;
-		}
-		free(array);
-		array = NULL;
-      }
 
-    printf("here");
+      /*if(array != NULL) {
+			for(int i = 0; array[i] != '\0'; i++) {
+        free(array[i]);
+        array[i] = NULL;
+		}
+    free(array);
+		array = NULL;
+  }*/
+
     //ask user for input and store in string variable
 
     int l = read(0, str, 1000);
@@ -48,8 +46,8 @@ int main(int argc, char **argv, char **envp) {
     //check if command was exit, if it was, exit
 //    int checkExit = cmp(str, "exit");
 //    if(checkExit == 1) {
-printf("'%s'\n",str);
-	if(cmp(str,"exit")){
+//printf("'%s'\n",str);
+	if(cmp(str, "exit")){
       //check if user want to exit
       exit(0);
     }
@@ -59,24 +57,31 @@ printf("'%s'\n",str);
       //space constant as delimiter defined in ksh.h file
       //tokenize string and place it in array, first argument will be command, next two will be parameters
       array = mytok(str, SPACE);
-      printf("got here");
 
-      for(int i = 0; array[i] != (char *)0; i++) {
-		if(findChar(array[i], '&'))
-      array[i] = NULL;
-      //array[i] = '\0';
+      for(int i = 0; array[i]; i++) {
+      /*  if(findChar(array[i], '&')) {
+        //array[i] = NULL;
+          array[i] = '\0';
+        }*/
+      //  printf("%s\n", array[i]);
+
     }
+    //printf("another test\n"); fflush(stdout);
 
       //if user wants to change directory, use chdir system call and show current working directory
       if(cmp(array[0], "cd")) {
         getcwd(cwd, sizeof(cwd));
-		printf("current working directory%s\n",cwd);
-		int success;
-		success = chdir(array[1]);
-		if(success < 0)
-			printf("\ndirectory not found\n");
-		continue;
-	}
+        printf("check cd\n");
+        ///printf("current working directory%s\n",cwd);
+        //fflush(stdout);
+        int success;
+        success = checkDir(array[1]);
+        if(success) {
+          if(!chdir(array[1]))
+            continue;
+        }
+      }
+
       //if a pipe was found in the string, call piping method
       /* if(cmp(array[1], "|")) {
 	piping(str, envp, dir);
@@ -84,28 +89,30 @@ printf("'%s'\n",str);
 
 
       //if it array not empty, begin a count to track if the command existed
-      if(array != '\0'){
-        printf("zxcvzxczv");
+      if(array != NULL){
 
-	//found uses stat system call to check if command exists, if it returns true it sets the command to the first argument passed by the user
-  if(found(array[0]) == 1) {
-		printf("found");
-	  cmd = array[0];
-	  execve(cmd, array, envp);
+	//found uses stat system call to check if command exists, if it returns true it sets
+  //the command to the first argument passed by the user
+        if(found(array[0]) == 1) {
+          printf("found");
+
+	        cmd = array[0];
+
 	  //sets command counter to 1 to execute
-	  count = 1;
-
+          count = 1;
 	}
 	//if it was not immediately found
 	else {
 		//traverse through all files to find a potential command in all directories
-		for(int i = 0; dir[i] != (char *)0; i++) {
-			//once found a file, for every file, put together in the syntax is, ex: /usr/local/sbin/cmd
-			char *cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
 
-			//call found method and if it is found, set command counter to 1 and set the tmp cmd to the actual command ready to execute
+    for(int i = 0; dir[i] != (char *)0; i++) {
+			//once found a file, for every file, put together in the syntax is, ex: /usr/local/sbin/cmd
+			char *cmd1 = (char *) malloc(1000);
+      cmd1 = myconcat(myconcat(dir[i], "/"), array[0]);
+
+			//call found method and if it is found, set command counter to 1 and set the tmp
+      //cmd to the actual command ready to execute
 			if(found(cmd1) == 1) {
-				printf("found");
 				count = 1;
 				cmd = cmd1;
 				break;
@@ -114,24 +121,23 @@ printf("'%s'\n",str);
 
 		if(count == 1) {
 		//if command was found, create process
-			printf("forking");
+
 			pid = fork();
-			if(pid == 0 && (findChar(str, '&') == 0)){
+			if(pid == 0){
 				//if child process, execute
-				printf("and here %s",cmd);
 				execve(cmd, array, envp);
 				count = 0;
 			}
-			else if(pid != 0 && (findChar(str, '&') == 0)){
+			else if(pid != 0){
 				//if parent process, wait until child exits
 				waitVal = waitpid(pid, &waitStatus, 0);
 				if(waitVal == pid) {
-					printf("%s\n child exited with value: %d", waitStatus);
+					printf("\nchild exited with value: %d\n", waitStatus);
 					count = 0;
 				}
 			}
 			//if it is not a child process and if there is an & found in the arguments, run on background
-			else if(pid != 0 && (findChar(str, '&') == 1)) {
+			else if(pid != 0) {
 				printf("running on bg");
 				/*printf("%d\n",findChar(str, '&'));
 				printf("is running on background");
@@ -141,18 +147,29 @@ printf("'%s'\n",str);
 		}
 		else {
 			//if command was not found, print error message
-		printf("%scommand was not found\n%s\n", array[0]);
-		}
-	}
-    }
+		printf("command was not found%s\n\n", array[0]);
+  }
+}
+}
+//if the array is not empty and we are done with the commands, free the memory
+    if(array != NULL) {
+      freeArray(array);
     }
   }
+}
 }
 
 //stat system call was made to check if command exists and if is executable, if it is, method returns true
 int found(char *arg) {
   struct stat sb;
   if((stat(arg, &sb) == 0) && (sb.st_mode & S_IXOTH))
+    return 1;
+  else return 0;
+}
+//stat system call was made to check directories
+int checkDir(char *arg) {
+  struct stat sb;
+  if((stat(arg, &sb) == 0) && (sb.st_mode & S_IFDIR))
     return 1;
   else return 0;
 }
@@ -214,6 +231,15 @@ int findChar(char *str, char toFind) {
 
 void runBackground(char *cmd, char ** array, char **envp) {
   execve(cmd, array, envp);
+}
+
+void freeArray(char ** array) {
+  for(int i = 0; array[i] != 0; i++) {
+    free(array[i]);
+    array[i] = NULL;
+  }
+  free(array);
+  array = NULL;
 }
 
 //piping method taken from The Linux Programming Interface book added with the loops above to find commands in each directory

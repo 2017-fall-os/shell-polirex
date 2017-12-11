@@ -31,7 +31,7 @@ int countLetters(char *word) { //method counts for number of letters by reaching
       letters++;
       }
     // else if(currChar == ' ') {
-      
+
     // break;
     //}
        word++;
@@ -45,8 +45,8 @@ char ** mytok(char *string, char delim) { //method tokenizes and places each wor
   char **array;
   char *word, *curr, *copy, *tmp;
 
-  numWords = countWords(string, delim);  
-  
+  numWords = countWords(string, delim);
+
 
   if(string == NULL) { //if input is null send error message and exit
     printf("memory not allocated");
@@ -54,7 +54,7 @@ char ** mytok(char *string, char delim) { //method tokenizes and places each wor
   }
   else  { //otherwise allocate memory for double pointer using numWords method
     array = (char **) malloc(numWords + 1);
-  
+
     tmp = string; //set a temporary placeholder for string to copy into main double pointer
     for(int i = 0; i <= numWords; i++) { //loop through double pointer
       //letters = countLetters(curr) + 1;
@@ -69,19 +69,17 @@ char ** mytok(char *string, char delim) { //method tokenizes and places each wor
 	//once letters have been counted and allocated, begin copying to array
 	for(word = tmp; (*word != delim && *word != '\0'); word++) {
 	  *(copy++) = *word;
-	  
+
 	}//once copied into array called current, set double pointer to point to current array
 	*copy = 0;
 	array[i] = curr;
 	//update temporary placeholder for next character
 	tmp = word;
-	
-	
     }
- 
   }
   return array;
 }
+
 
 //main method allocates memory for input pointer
 /*int input() {
